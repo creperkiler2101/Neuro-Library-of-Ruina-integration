@@ -1,0 +1,6 @@
+.vs
+packages
+.editorconfig
+bin
+obj
+*.csproj.user
