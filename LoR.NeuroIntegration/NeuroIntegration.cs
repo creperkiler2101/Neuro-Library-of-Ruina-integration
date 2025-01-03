@@ -27,7 +27,7 @@ public class NeuroIntegration : MonoBehaviour
         NeuroIntegrationPlugin.Instance.Logger.LogInfo("Turn start");
         
         ClearActionWindow();
-        StartNeuroTurnActionWindow();
+        StartNeuroTurnActionWindow(true);
     }
 
     public void OnTurnEnd()
@@ -43,7 +43,7 @@ public class NeuroIntegration : MonoBehaviour
         NeuroIntegrationPlugin.Instance.Logger.LogInfo("Card played");
        
         ClearActionWindow();
-        StartNeuroTurnActionWindow();
+        StartNeuroTurnActionWindow(false);
     }
 
     public void OnSelectAbnormalityPage()
@@ -135,7 +135,7 @@ public class NeuroIntegration : MonoBehaviour
         _actionWindow.Register();
     }
 
-    private void StartNeuroTurnActionWindow()
+    private void StartNeuroTurnActionWindow(bool firstTime = false)
     {
         CreateActionWindow();
 
@@ -170,13 +170,13 @@ public class NeuroIntegration : MonoBehaviour
             }
         }
 
-        if (!canPlayCard && NeuroIntegrationPlugin.Instance.EndTurnAction)
+        if (NeuroIntegrationPlugin.Instance.EndTurnAction)
         {
             _actionWindow.AddAction(new EndTurnAction(_actionWindow));
         }
 
         var state = BattleState.BattleState.CollectState();
-        var context = "Its your turn;";
+        var context = firstTime ? "Its your turn;" : "Its still your turn;";
         if (canPlayCard)
         {
             context += " You can play card;";
