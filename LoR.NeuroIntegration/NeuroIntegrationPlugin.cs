@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using BepInEx.Unity.Mono;
 using HarmonyLib;
 using LoR.NeuroIntegration.Controllers;
@@ -23,6 +24,8 @@ public class NeuroIntegrationPlugin : BaseUnityPlugin
     public bool SkipOpening => _skipOpening.Value;
     public bool AutoContinue => _autoContinue.Value;
 
+    public new ManualLogSource Logger => base.Logger;
+
     public static NeuroIntegrationPlugin Instance;
 
     public void Awake()
@@ -41,6 +44,7 @@ public class NeuroIntegrationPlugin : BaseUnityPlugin
         var gameObject = new GameObject();
         gameObject.AddComponent<NeuroIntegration>();
         gameObject.AddComponent<SpeedDiceUIController>();
+        gameObject.AddComponent<AbnormalityPageSelectionUIController>();
         gameObject.AddComponent<CursorPositionController>();
         DontDestroyOnLoad(gameObject);
     }

@@ -13,6 +13,13 @@ public class BattleUnitStateModel
     public int MaxHP { get; set; }
     public int CurrentSP { get; set; }
     public int MaxSP { get; set; }
+    public int PositiveEmotionCoins { get; set; }
+    public int NegativeEmotionCoins { get; set; }
+    public int TotalEmotionCoins { get; set; }
+    public int EmotionCoinsToNextLevel { get; set; }
+    public int CurrentEmotionLevel { get; set; }
+    public int MaxEmotionLevel { get; set; }
+    public bool IsActionable { get; set; }
     public bool IsStaggered { get; set; }
     public bool IsDead { get; set; }
     public string SlashHpResist { get; set; }

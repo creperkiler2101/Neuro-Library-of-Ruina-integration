@@ -22,7 +22,7 @@ public static class LibrarianExtensions
 
     public static IEnumerable<BattleDiceCardModel> GetPlayableCards(this BattleUnitModel librarian)
     {
-        foreach (var card in librarian.allyCardDetail.GetHand())
+        foreach (var card in librarian.GetFullHand())
         {
             if (librarian.CheckCardAvailableForPlayer(card))
             {
@@ -31,9 +31,35 @@ public static class LibrarianExtensions
         }
     }
 
-    public static bool CanPlayAnyCard(this BattleUnitModel librarian)
+    public static IEnumerable<BattleDiceCardModel> GetFullHand(this BattleUnitModel librarian)
     {
         foreach (var card in librarian.allyCardDetail.GetHand())
+        {
+            yield return card;
+        }
+
+        foreach (var card in librarian.personalEgoDetail.GetHand())
+        {
+            yield return card;
+        }
+
+        if (!librarian.IsRedMist())
+        {
+            foreach (var card in Singleton<SpecialCardListModel>.Instance.GetHand())
+            {
+                yield return card;
+            }
+        }
+    }
+
+    public static bool IsRedMist(this BattleUnitModel librarian)
+    {
+        return librarian.Book.GetBookClassInfoId() == 250022;
+    }
+
+    public static bool CanPlayAnyCard(this BattleUnitModel librarian)
+    {
+        foreach (var card in librarian.GetFullHand())
         {
             if (librarian.CheckCardAvailableForPlayer(card))
             {

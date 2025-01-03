@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
-using System;
+using LoR.NeuroIntegration.Extensions;
+using NeuroSdk.Messages.Outgoing;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -16,28 +17,46 @@ public class SpeedDiceUIController : MonoBehaviour
         Instance = this;
     }
 
-    public void PlayCard(BattleUnitModel librarian, int librarianSpeedDice, BattleUnitModel enemy, int enemySpeedDice, BattleDiceCardModel card, Action callback = null)
+    public void PlayCard(BattleUnitModel librarian, int librarianSpeedDice, BattleUnitModel enemy, int enemySpeedDice, BattleDiceCardModel card)
     {
-        StartCoroutine(PlayCardCoroutine(librarian, librarianSpeedDice, enemy, enemySpeedDice, card, callback));
+        StartCoroutine(PlayCardCoroutine(librarian, librarianSpeedDice, enemy, enemySpeedDice, card));
     }
 
-    public void RemoveCard(BattleUnitModel librarian, int librarianSpeedDice, Action callback = null)
+    public void RemoveCard(BattleUnitModel librarian, int librarianSpeedDice)
     {
         var speedDiceUI = librarian.view.speedDiceSetterUI.GetSpeedDiceByIndex(librarianSpeedDice);
         AccessTools.Method(speedDiceUI.GetType(), "EmptySpeedDiceSlot").Invoke(speedDiceUI, []);
-        callback?.Invoke();
     }
 
-    private IEnumerator PlayCardCoroutine(BattleUnitModel librarian, int librarianSpeedDice, BattleUnitModel enemy, int enemySpeedDice, BattleDiceCardModel card, Action callback = null)
+    private IEnumerator PlayCardCoroutine(BattleUnitModel librarian, int librarianSpeedDice, BattleUnitModel enemy, int enemySpeedDice, BattleDiceCardModel card)
     {
         var speedDiceUI = librarian.view.speedDiceSetterUI.GetSpeedDiceByIndex(librarianSpeedDice);
         AccessTools.Method(speedDiceUI.GetType(), "OnClickSpeedDice").Invoke(speedDiceUI, []);
         
         yield return new WaitForSeconds(1);
-        
+
         var cardUI = BattleManagerUI.Instance.ui_unitCardsInHand
             .GetCardUIList()
-            .First(x => x.CardModel == card);
+            .FirstOrDefault(x => x.CardModel == card);
+
+        if (cardUI == null)
+        {
+            BattleManagerUI.Instance.ui_unitCardsInHand.OnPdYButton(new BaseEventData(EventSystem.current));
+            BattleManagerUI.Instance.ui_unitCardsInHand.OnClickEgoButton();
+            yield return new WaitForSeconds(1.5f);
+
+            cardUI = BattleManagerUI.Instance.ui_unitCardsInHand
+                .GetCardUIList()
+                .FirstOrDefault(x => x.CardModel == card);
+        }
+
+        if (cardUI == null)
+        {
+            NeuroIntegrationPlugin.Instance.Logger.LogError($"Card not found in hand nor in ego list (Librarian: {librarian.GetUniqueName()}; Card: {card.GetName()})");
+            Context.Send("Card wasnt played cuz of unknown error");
+            NeuroIntegration.Instance.OnCardPlayed();
+            yield break;
+        }
 
         CursorPositionController.Instance.SetPosition(cardUI.transform.position);
         cardUI.ShowDetail();
@@ -56,7 +75,5 @@ public class SpeedDiceUIController : MonoBehaviour
 
         AccessTools.Method(enemySpeedDiceUI.GetType(), "OnClickSpeedDice").Invoke(enemySpeedDiceUI, []);
         enemySpeedDiceUI.OnPointerExit(new BaseEventData(EventSystem.current));
-
-        callback?.Invoke();
     }
 }

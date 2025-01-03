@@ -6,48 +6,44 @@ using NeuroSdk.Actions;
 using NeuroSdk.Json;
 using NeuroSdk.Websocket;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Linq;
 
 namespace LoR.NeuroIntegration.NeuroActions;
 
 public class PlayCardAction : NeuroAction<PlayCardActionData>
 {
-    public override string Name => $"play_card_{_librarian.UnitData.unitData.name}_{_speedDice}";
+    public override string Name => $"play_card_{_librarian.UnitData.unitData.name.ToLower()}_{_speedDice}";
     protected override string Description => $"Select a card to play by {_librarian.UnitData.unitData.name} (Speed dice: {_speedDice}) with speed {GetSpeedDiceSpeed()} against enemy and its speed dice";
     protected override JsonSchema Schema { get; } 
 
     private readonly BattleUnitModel _librarian;
     private readonly int _speedDice;
-    private readonly Action _callback;
 
     public PlayCardAction(
         BattleUnitModel librarian,
         int speedDice,
-        Action callback,
         ActionWindow actionWindow) : base(actionWindow)
     {
         _librarian = librarian;
         _speedDice = speedDice;
-        _callback = callback;
 
         var librarianLight = _librarian.cardSlotDetail.PlayPoint - _librarian.cardSlotDetail.ReservedPlayPoint;
         Schema = new JsonSchema
         {
             Type = JsonSchemaType.Object,
-            Required = ["card", "enemy", "speed_dice_index"],
+            Required = ["card", "target", "speed_dice_index"],
             Properties =
             {
                 { "card", QJS.Enum(_librarian.GetPlayableCards().Select(x => x.GetName())) },
-                { "enemy", QJS.Enum(BattleUnitNameMap.ListEnemyNames()) },
-                { "speed_dice_index", new JsonSchema { Type = JsonSchemaType.Integer, Minimum = 0 } }
+                { "target", QJS.Enum(BattleUnitNameMap.ListAliveNames()) },
+                { "speed_dice_index", new JsonSchema { Type = JsonSchemaType.Integer, Minimum = 0, Maximum = BattleUnitUtils.GetMaxSpeedDiceCount() - 1 } }
             }
         };
     }
 
     protected override UniTask ExecuteAsync(PlayCardActionData parsedData)
     {
-        SpeedDiceUIController.Instance.PlayCard(_librarian, _speedDice, parsedData.Target, parsedData.TargetSpeedDice, parsedData.Card, _callback);
+        SpeedDiceUIController.Instance.PlayCard(_librarian, _speedDice, parsedData.Target, parsedData.TargetSpeedDice, parsedData.Card);
 
         return UniTask.CompletedTask;
     }
@@ -57,49 +53,55 @@ public class PlayCardAction : NeuroAction<PlayCardActionData>
         var cardName = actionData.Data?["card"]?.Value<string>();
         if (string.IsNullOrWhiteSpace(cardName))
         {
-            parsedData = new();
+            parsedData = null;
             return ExecutionResult.Success();
         }
         
         var card = GetCard(cardName);
         if (card == null)
         {
-            parsedData = new();
+            parsedData = null;
             return ExecutionResult.Failure($"Card '{cardName}' not found in hand or its not usable");
         }
 
-        var enemyName = actionData.Data?["enemy"]?.Value<string>();
-        var enemy = GetEnemy(enemyName);
-        if (enemy == null)
+        var targetName = actionData.Data?["target"]?.Value<string>();
+        var target = GetTarget(targetName);
+        if (target == null)
         {
-            parsedData = new();
-            return ExecutionResult.Failure($"Enemy '{enemyName}' not found");
+            parsedData = null;
+            return ExecutionResult.Failure($"Target '{targetName}' not found");
         }
 
         var speedDiceIndex = actionData.Data?["speed_dice_index"]?.Value<int>();
         if (!speedDiceIndex.HasValue)
         {
-            parsedData = new();
+            parsedData = null;
             return ExecutionResult.Failure($"Speed value is invalid");
         }
 
-        if (enemy.speedDiceCount <= speedDiceIndex)
+        if (target.speedDiceCount <= speedDiceIndex)
         {
-            parsedData = new();
-            return ExecutionResult.Failure($"{enemyName} has only {enemy.speedDiceCount} speed dices");
+            parsedData = null;
+            return ExecutionResult.Failure($"{targetName} has only {target.speedDiceCount} speed dices");
+        }
+
+        if (target.IsDeadReal() || !BattleUnitUtils.CanUseCard(_librarian, _speedDice, target, speedDiceIndex.Value, card))
+        {
+            parsedData = null;
+            return ExecutionResult.Failure($"Unable to target '{targetName}' using '{cardName}'");
         }
 
         parsedData = new()
         {
             Card = card,
-            Target = enemy,
+            Target = target,
             TargetSpeedDice = speedDiceIndex.Value,
         };
 
         return ExecutionResult.Success();
     }
 
-    private BattleUnitModel GetEnemy(string name)
+    private BattleUnitModel GetTarget(string name)
     {
         return BattleUnitNameMap.GetBattleUnitModel(name);
     }

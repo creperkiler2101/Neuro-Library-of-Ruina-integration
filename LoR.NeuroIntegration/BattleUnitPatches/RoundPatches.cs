@@ -1,7 +1,5 @@
-﻿using BepInEx.Logging;
-using HarmonyLib;
+﻿using HarmonyLib;
 using LoR.NeuroIntegration.Utils;
-using System.Collections;
 
 namespace LoR.NeuroIntegration;
 
@@ -10,12 +8,11 @@ namespace LoR.NeuroIntegration;
 public class ApplyLibrarianCardPhasePatch
 {
     public static bool IsNeuroTurn { get; private set; }
-    private static ManualLogSource _logger = Logger.CreateLogSource("neuro");
 
     public static void NeuroTurnEnded()
     {
         IsNeuroTurn = false;
-        _logger.LogInfo("Neuro turn end");
+        NeuroIntegration.Instance.OnTurnEnd();
     }
 
     private static void Postfix(StageController __instance, float deltaTime)
@@ -27,12 +24,6 @@ public class ApplyLibrarianCardPhasePatch
 
         IsNeuroTurn = true;
 
-        NeuroIntegration.Instance.StartCoroutine(NeuroTurnCoroutine());
-    }
-
-    private static IEnumerator NeuroTurnCoroutine()
-    {
-        yield return new UnityEngine.WaitForSeconds(1);
         BattleUnitNameMap.Refresh();
         NeuroIntegration.Instance.OnTurnStart();
     }
@@ -55,5 +46,27 @@ public class RoundStartPhasePatch
     private static void Prefix(StageController __instance)
     {
         __instance.CheckInput(true);
+    }
+}
+
+[HarmonyPatch(typeof(StageController))]
+[HarmonyPatch("StartBattle")]
+public class StartBattlePatch
+{
+    private static void Postfix(StageController __instance)
+    {
+        NeuroSdk.Messages.Outgoing.Context.Send($"Battle againsts {(__instance.stageType == StageType.Invitation ? "guests" : "abnormality")} started");
+    }
+}
+
+[HarmonyPatch(typeof(StageController))]
+[HarmonyPatch("EndBattle")]
+public class EndBattlePatch
+{
+    private static void Prefix(StageController __instance)
+    {
+        var battleResult = __instance.GetStageModel().GetFloor(__instance.CurrentFloor).IsUnavailable() ? "lost" : "win";
+
+        NeuroSdk.Messages.Outgoing.Context.Send($"Battle againsts {(__instance.stageType == StageType.Invitation ? "guests" : "abnormality")} finished. You {battleResult}");
     }
 }

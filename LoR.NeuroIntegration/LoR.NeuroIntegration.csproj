@@ -36,12 +36,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BattleState\Models\AbnormalityPageSelectModel.cs" />
     <Compile Include="BattleState\BattleState.cs" />
+    <Compile Include="BattleState\Models\AbnormalityPageModel.cs" />
+    <Compile Include="BattleState\Models\AbnormalityPageTargetSelectModel.cs" />
     <Compile Include="BattleState\Models\BattleStateModel.cs" />
     <Compile Include="BattleState\Models\BattleUnitStateModel.cs" />
     <Compile Include="BattleState\Models\BuffModel.cs" />
     <Compile Include="BattleState\Models\CardDiceModel.cs" />
     <Compile Include="BattleState\Models\CardModel.cs" />
+    <Compile Include="BattleState\Models\EgoCardSelectModel.cs" />
     <Compile Include="BattleState\Models\LibrarianModel.cs" />
     <Compile Include="BattleState\Models\PassiveModel.cs" />
     <Compile Include="BattleState\Models\SpeedDiceModel.cs" />
@@ -49,21 +53,29 @@
     <Compile Include="BattleUnitPatches\BattleUnitDeadPatch.cs" />
     <Compile Include="BattleUnitPatches\BattleUnitStaggeredPatch.cs" />
     <Compile Include="BattleUnitPatches\RoundPatches.cs" />
+    <Compile Include="Controllers\AbnormalityPageSelectionUIController.cs" />
     <Compile Include="Controllers\CursorPositionController.cs" />
     <Compile Include="Controllers\SpeedDiceUIController.cs" />
+    <Compile Include="Extensions\AbnormalityPageExtensions.cs" />
     <Compile Include="Extensions\CardExtensions.cs" />
     <Compile Include="Extensions\LibrarianExtensions.cs" />
     <Compile Include="NeuroActions\EndTurnAction.cs" />
     <Compile Include="NeuroActions\PlayCardAction.cs" />
     <Compile Include="NeuroActions\RemoveCardAction.cs" />
+    <Compile Include="NeuroActions\SelectAbnormalityPageAction.cs" />
+    <Compile Include="NeuroActions\SelectAbnormalityPageTargetAction.cs" />
+    <Compile Include="NeuroActions\SelectEgoCardAction.cs" />
     <Compile Include="NeuroIntegration.cs" />
     <Compile Include="NeuroIntegrationPlugin.cs" />
+    <Compile Include="UIPatches\AbnormalityPageUIPatch.cs" />
     <Compile Include="UIPatches\BattleCharacterProfileUIPatch.cs" />
     <Compile Include="UIPatches\BattleUnitCardsInHandUIPatch.cs" />
     <Compile Include="UIPatches\OpeningPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UIPatches\TitleMenuPatch.cs" />
+    <Compile Include="Utils\AbnormalityPageSelectionUtils.cs" />
     <Compile Include="Utils\BattleUnitNameMap.cs" />
+    <Compile Include="Utils\BattleUnitUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.10.2.0, Culture=neutral, processorArchitecture=MSIL">

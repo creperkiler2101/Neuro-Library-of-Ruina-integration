@@ -48,6 +48,18 @@ public static class BattleUnitNameMap
         }
     }
 
+    public static List<string> ListNames()
+    {
+        var units = BattleObjectManager.instance.GetList();
+        return units.Select(x => x.GetUniqueName()).ToList();
+    }
+
+    public static List<string> ListAliveNames()
+    {
+        var units = BattleObjectManager.instance.GetAliveList(true);
+        return units.Select(x => x.GetUniqueName()).ToList();
+    }
+
     public static List<string> ListEnemyNames()
     {
         var enemies = BattleObjectManager.instance.GetList(Faction.Enemy);
