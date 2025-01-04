@@ -12,6 +12,7 @@ Currently neuro can:
 * Select EGO cards
 * Remove played card
 * End turn
+
 All of this should allow neuro to fully complete battle by herself
 
 Things to do:
